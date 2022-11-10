@@ -92,3 +92,52 @@ anova(fit_null, fit_alt) %>%
   broom::tidy()
 ```
 
+## Room Type by borough
+
+Interactions ...?
+
+```{r}
+fit =
+  nyc_airbnb %>% 
+  lm(price ~ stars + borough * room_type, data = .)
+
+fit %>% 
+  broom::tidy()
+```
+
+So... can we fit models by borough...?
+
+```{r}
+nyc_airbnb %>%
+  nest(df = -borough) %>% 
+  mutate(
+    models = map(.x = df, ~lm(price ~ stars + room_type, data = .x))
+  ) %>% 
+  pull(models)
+
+nyc_airbnb %>%
+  nest(df = -borough) %>% 
+  mutate(
+    models = map(.x = df, ~lm(price ~ stars + room_type, data = .x)),
+    results = map(models, broom::tidy)
+  ) %>% 
+  select(-df, -models) %>% 
+  unnest(results)
+
+# #nyc_airbnb %>% 
+#   select(borough, term, estimate) %>% 
+#   mutate(term = fct_inorder(term)) %>% 
+#   pivot_wider(
+#     names_from = term, values_from = estimate) %>% 
+#   knitr::kable(digits = 3)
+```
+
+testing without map, double check
+
+```{r}
+nyc_airbnb %>% 
+  filter(borough == "Bronx") %>% 
+  lm(price ~ stars + room_type, data = .) %>% 
+  broom::tidy()
+```
+
